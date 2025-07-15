@@ -23,6 +23,10 @@
 ;; myPackages contains a list of package names
 (defvar myPackages
   '(better-defaults                 ;; Set up some better Emacs defaults
+    elpy                            ;; Emacs Lisp Python Environment
+    flycheck                        ;; On the fly syntax checking
+    py-autopep8                     ;; Run autopep8 on save
+    blacken                         ;; Black formatting on save
     material-theme                  ;; Theme
     )
   )
@@ -41,7 +45,38 @@
 
 (setq inhibit-startup-message t)    ;; Hide the startup message
 (load-theme 'material t)            ;; Load material theme
-(global-linum-mode t)               ;; Enable line numbers globally
+;; ORG START "error with emacs-29.4"
+;; (global-linum-mode t)            ;; Enable line numbers globally
+;; ORG END
+;; CHG START
+(global-display-line-numbers-mode t)
+;; CHG END
+
+
+;; ====================================
+;; Development Setup
+;; ====================================
+;; Enable elpy
+(elpy-enable)
+(setq elpy-rpc-python-command "/usr/bin/python3")
+(setq elpy-rpc-virtualenv-path "~/.emacs.d/elpy/rpc-venv")
+
+;; Use IPython for REPL
+(setq python-shell-interpreter "jupyter"
+      python-shell-interpreter-args "console --simple-prompt"
+      python-shell-prompt-detect-failure-warning nil)
+(add-to-list 'python-shell-completion-native-disabled-interpreters
+             "jupyter")
+
+;; Enable Flycheck
+(when (require 'flycheck nil t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+;; Enable autopep8
+(require 'py-autopep8)
+;; (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+(add-hook 'elpy-mode-hook 'py-autopep8-mode)
 
 
 ;; ===================================
@@ -68,6 +103,8 @@
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;
 
 (message "%s" (propertize "coding-system" 'face '(:foreground "red")))
+
+(set-language-environment "utf-8")
 
 ;; デフォルトの文字コード
 (set-default-coding-systems 'utf-8-unix)
@@ -327,53 +364,53 @@
       ad-do-it) ))
 
 
-;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;
-;;; @ flymake                                                       ;;;
-;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;
+;; ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;
+;; ;;; @ flymake                                                       ;;;
+;; ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;
 
-(message "%s" (propertize "flymake" 'face '(:foreground "red")))
+;; (message "%s" (propertize "flymake" 'face '(:foreground "red")))
 
-(with-eval-after-load 'flymake
+;; (with-eval-after-load 'flymake
 
-  ;; Appearance
-  (add-hook 'flymake-mode-hook
-            (lambda ()
-              (set-face-attribute 'flymake-errline nil
-                                  :underline "red"
-                                  :weight 'bold
-                                  :background nil)
-              (set-face-attribute 'flymake-warnline nil
-                                  :underline "yellow"
-                                  :weight 'bold
-                                  :background nil)
-              ))
+;;   ;; Appearance
+;;   (add-hook 'flymake-mode-hook
+;;             (lambda ()
+;;               (set-face-attribute 'flymake-errline nil
+;;                                   :underline "red"
+;;                                   :weight 'bold
+;;                                   :background nil)
+;;               (set-face-attribute 'flymake-warnline nil
+;;                                   :underline "yellow"
+;;                                   :weight 'bold
+;;                                   :background nil)
+;;               ))
 
-  ;; Move to warning/error lines with M-p/M-n
-  (global-set-key "\M-p" 'flymake-goto-prev-error)
-  (global-set-key "\M-n" 'flymake-goto-next-error)
+;;   ;; Move to warning/error lines with M-p/M-n
+;;   (global-set-key "\M-p" 'flymake-goto-prev-error)
+;;   (global-set-key "\M-n" 'flymake-goto-next-error)
 
-  ;; Display warning/error lines
-  (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
+;;   ;; Display warning/error lines
+;;   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
 
-  ;; Don't display warnings in GUI
-  (setq flymake-gui-warnings-enabled t)
+;;   ;; Don't display warnings in GUI
+;;   (setq flymake-gui-warnings-enabled t)
 
-  ;; Also apply syntax checks for header files
-  (push '("\\.h\\'" flymake-simple-make-init flymake-master-cleanup)
-        flymake-allowed-file-name-masks)
+;;   ;; Also apply syntax checks for header files
+;;   (push '("\\.h\\'" flymake-simple-make-init flymake-master-cleanup)
+;;         flymake-allowed-file-name-masks)
 
-  ;; UNDER REVIEW START
-  ;; ;; Show error in minibuffer
-  ;; (defun flymake-show-help ()
-  ;;   (when (get-char-property (point) 'flymake-overlay)
-  ;;     (let ((help (get-char-property (point) 'help-echo)))
-  ;;       (if help (message "%s" help)))))
-  ;; (add-hook 'post-command-hook 'flymake-show-help)
-  ;; UNDER REVIEW END
-)
+;;   ;; UNDER REVIEW START
+;;   ;; ;; Show error in minibuffer
+;;   ;; (defun flymake-show-help ()
+;;   ;;   (when (get-char-property (point) 'flymake-overlay)
+;;   ;;     (let ((help (get-char-property (point) 'help-echo)))
+;;   ;;       (if help (message "%s" help)))))
+;;   ;; (add-hook 'post-command-hook 'flymake-show-help)
+;;   ;; UNDER REVIEW END
+;; )
 
-;; Enable/Disable flymake-mode by hand
-(global-set-key (kbd "C-|") 'flymake-mode)
+;; ;; Enable/Disable flymake-mode by hand
+;; (global-set-key (kbd "C-|") 'flymake-mode)
 
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;
@@ -830,14 +867,14 @@
 ;; ;; Don't show splash screen after emacs booted
 ;; (setq inhibit-splash-screen t)
 
-;; Inappropriate ioctl for device
+;; ;; Inappropriate ioctl for device
 ;; (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
 
-;; Start at "HOME" directory
+;; ;; Start at "HOME" directory
 ;; (cd (getenv "HOME"))
 ;; (cd "~/")
-(setq default-directory "~/")
-(setq command-line-default-directory "~/")
+;; (setq default-directory "~/")
+;; (setq command-line-default-directory "~/")
 
 ;; Define system time locale
 (setq system-time-locale "C")
@@ -892,7 +929,7 @@
 (setq Buffer-menu-sort-column 4)
 
 ;; Dont' show the initial message of the scratch buffer
-(setq initial-scratch-message t)
+(setq initial-scratch-message "")
 
 ;; Display the current time on the mode line
 (display-time-mode 1)
@@ -909,3 +946,16 @@
 
 
 ;; User-Defined init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(## py-autopep8 material-theme flycheck elpy ein blacken better-defaults)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
